@@ -1,0 +1,4 @@
+{
+    "test": "true",
+    "data_dir": "./test/assets/data.db"
+}

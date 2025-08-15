@@ -1,0 +1,15 @@
+CREATE TABLE tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    due_date DATETIME,
+    priority INTEGER DEFAULT 5,
+    tags TEXT,
+    parent_id INTEGER,
+    completed_at DATETIME,
+    progress INTEGER CHECK(progress BETWEEN 0 AND 100),
+    archived BOOLEAN NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'NOT STARTED' CHECK(status IN ('DONE', 'IN PROGRESS', 'REVIEW', 'NOT STARTED'))
+);
