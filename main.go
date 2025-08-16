@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"github.com/Sheriff-Hoti/beaver-task/config"
+	"github.com/Sheriff-Hoti/beaver-task/database"
 	"github.com/Sheriff-Hoti/beaver-task/tui"
 	tea "github.com/charmbracelet/bubbletea"
 	_ "modernc.org/sqlite"
@@ -53,14 +54,16 @@ func main() {
 
 	defer db.Close()
 
-	// queries := database.New(db)
+	queries := database.New(db)
 
-	// res, err := queries.CreateTask(ctx, database.CreateTaskParams{
-	// 	Title:       "Sample Task",
-	// 	Description: sql.NullString{String: "This is a sample task", Valid: true},
-	// })
+	initialTasks, err := queries.ListTasks(ctx, 1)
 
-	p := tea.NewProgram(tui.InitialModel())
+	if err != nil {
+		log.Fatal("error listing tasks:", err)
+		return
+	}
+
+	p := tea.NewProgram(tui.InitialModel(initialTasks), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)

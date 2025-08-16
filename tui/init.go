@@ -1,26 +1,134 @@
 package tui
 
 import (
-	"fmt"
-
+	"github.com/Sheriff-Hoti/beaver-task/database"
+	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
-type Model struct {
-	choices  []string         // items on the to-do list
-	cursor   int              // which to-do list item our cursor is pointing at
-	selected map[int]struct{} // which to-do items are selected
+var (
+	appStyle = lipgloss.NewStyle().Padding(1, 2)
+
+	titleStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#FFFDF5")).
+			Background(lipgloss.Color("#25A065")).
+			Padding(0, 1)
+
+	statusMessageStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.AdaptiveColor{Light: "#04B575", Dark: "#04B575"}).
+				Render
+)
+
+type Mode int
+
+const (
+	modeList Mode = iota
+	modeAdd
+)
+
+type Task struct {
+	ID              int64
+	TaskTitle       string
+	TaskDescription string
 }
 
-func InitialModel() Model {
-	return Model{
-		// Our to-do list is a grocery list
-		choices: []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
+type listKeyMap struct {
+	toggleSpinner    key.Binding
+	toggleTitleBar   key.Binding
+	toggleStatusBar  key.Binding
+	togglePagination key.Binding
+	toggleHelpMenu   key.Binding
+	insertItem       key.Binding
+}
 
-		// A map which indicates which choices are selected. We're using
-		// the  map like a mathematical set. The keys refer to the indexes
-		// of the `choices` slice, above.
-		selected: make(map[int]struct{}),
+func newListKeyMap() *listKeyMap {
+	return &listKeyMap{
+		insertItem: key.NewBinding(
+			key.WithKeys("a"),
+			key.WithHelp("a", "add item"),
+		),
+		toggleSpinner: key.NewBinding(
+			key.WithKeys("s"),
+			key.WithHelp("s", "toggle spinner"),
+		),
+		toggleTitleBar: key.NewBinding(
+			key.WithKeys("T"),
+			key.WithHelp("T", "toggle title"),
+		),
+		toggleStatusBar: key.NewBinding(
+			key.WithKeys("S"),
+			key.WithHelp("S", "toggle status"),
+		),
+		togglePagination: key.NewBinding(
+			key.WithKeys("P"),
+			key.WithHelp("P", "toggle pagination"),
+		),
+		toggleHelpMenu: key.NewBinding(
+			key.WithKeys("H"),
+			key.WithHelp("H", "toggle help"),
+		),
+	}
+}
+
+func (t Task) FilterValue() string { return t.TaskTitle }
+func (t Task) Title() string       { return t.TaskTitle }
+func (t Task) Description() string { return t.TaskDescription }
+
+func fromDatabaseTask(task *database.Task) *Task {
+	return &Task{
+		ID:              task.ID,
+		TaskTitle:       task.Title,
+		TaskDescription: task.Description.String,
+	}
+}
+
+func fromDatabaseTasks(tasks []database.Task) []list.Item {
+	items := make([]list.Item, len(tasks))
+	for i, task := range tasks {
+		items[i] = fromDatabaseTask(&task)
+	}
+	return items
+}
+
+type Model struct {
+	mode         Mode
+	tasks        list.Model        // Bubble Tea's list model, which we use to render our to-do list
+	queries      *database.Queries // Database queries for task management
+	keys         *listKeyMap
+	delegateKeys *delegateKeyMap
+}
+
+func InitialModel(initialTasks []database.Task) Model {
+	var (
+		delegateKeys = newDelegateKeyMap()
+		listKeys     = newListKeyMap()
+	)
+
+	delegate := newItemDelegate(delegateKeys)
+
+	tasks := list.New(fromDatabaseTasks(initialTasks), delegate, 0, 0)
+
+	tasks.Title = "Tasks"
+	tasks.Styles.Title = titleStyle
+
+	tasks.AdditionalFullHelpKeys = func() []key.Binding {
+		return []key.Binding{
+			listKeys.toggleSpinner,
+			listKeys.insertItem,
+			listKeys.toggleTitleBar,
+			listKeys.toggleStatusBar,
+			listKeys.togglePagination,
+			listKeys.toggleHelpMenu,
+		}
+	}
+
+	return Model{
+		mode:         modeList,
+		tasks:        tasks,
+		keys:         listKeys,
+		delegateKeys: delegateKeys,
 	}
 }
 
@@ -30,73 +138,65 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmds []tea.Cmd
+
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		h, v := appStyle.GetFrameSize()
+		m.tasks.SetSize(msg.Width-h, msg.Height-v)
 
-	// Is it a key press?
 	case tea.KeyMsg:
+		// Don't match any of the keys below if we're actively filtering.
+		if m.tasks.FilterState() == list.Filtering {
+			break
+		}
 
-		// Cool, what was the actual key pressed?
-		switch msg.String() {
+		switch {
+		case key.Matches(msg, m.keys.toggleSpinner):
+			cmd := m.tasks.ToggleSpinner()
+			return m, cmd
 
-		// These keys should exit the program.
-		case "ctrl+c", "q":
-			return m, tea.Quit
+		case key.Matches(msg, m.keys.toggleTitleBar):
+			v := !m.tasks.ShowTitle()
+			m.tasks.SetShowTitle(v)
+			m.tasks.SetShowFilter(v)
+			m.tasks.SetFilteringEnabled(v)
+			return m, nil
 
-		// The "up" and "k" keys move the cursor up
-		case "up", "k":
-			if m.cursor > 0 {
-				m.cursor--
+		case key.Matches(msg, m.keys.toggleStatusBar):
+			m.tasks.SetShowStatusBar(!m.tasks.ShowStatusBar())
+			return m, nil
+
+		case key.Matches(msg, m.keys.togglePagination):
+			m.tasks.SetShowPagination(!m.tasks.ShowPagination())
+			return m, nil
+
+		case key.Matches(msg, m.keys.toggleHelpMenu):
+			m.tasks.SetShowHelp(!m.tasks.ShowHelp())
+			return m, nil
+
+		case key.Matches(msg, m.keys.insertItem):
+			m.delegateKeys.remove.SetEnabled(true)
+			newItem := &Task{
+				TaskTitle:       "New Task",
+				TaskDescription: "This is a new task",
 			}
-
-		// The "down" and "j" keys move the cursor down
-		case "down", "j":
-			if m.cursor < len(m.choices)-1 {
-				m.cursor++
-			}
-
-		// The "enter" key and the spacebar (a literal space) toggle
-		// the selected state for the item that the cursor is pointing at.
-		case "enter", " ":
-			_, ok := m.selected[m.cursor]
-			if ok {
-				delete(m.selected, m.cursor)
-			} else {
-				m.selected[m.cursor] = struct{}{}
-			}
+			//add the insert logic here
+			insCmd := m.tasks.InsertItem(0, newItem)
+			statusCmd := m.tasks.NewStatusMessage(statusMessageStyle("Added " + newItem.Title()))
+			return m, tea.Batch(insCmd, statusCmd)
 		}
 	}
 
-	// Return the updated model to the Bubble Tea runtime for processing.
-	// Note that we're not returning a command.
-	return m, nil
+	// This will also call our delegate's update function.
+	newListModel, cmd := m.tasks.Update(msg)
+	m.tasks = newListModel
+	cmds = append(cmds, cmd)
+
+	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {
-	// The header
-	s := "What should we buy at the market?\n\n"
 
-	// Iterate over our choices
-	for i, choice := range m.choices {
-
-		// Is the cursor pointing at this choice?
-		cursor := " " // no cursor
-		if m.cursor == i {
-			cursor = ">" // cursor!
-		}
-
-		// Is this choice selected?
-		checked := " " // not selected
-		if _, ok := m.selected[i]; ok {
-			checked = "x" // selected!
-		}
-
-		// Render the row
-		s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)
-	}
-
-	// The footer
-	s += "\nPress q to quit.\n"
-
-	// Send the UI for rendering
-	return s
+	return appStyle.Render(m.tasks.View())
 }
