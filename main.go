@@ -9,6 +9,7 @@ import (
 	"log"
 
 	"github.com/Sheriff-Hoti/beaver-task/config"
+	"github.com/Sheriff-Hoti/beaver-task/database"
 	_ "modernc.org/sqlite"
 )
 
@@ -22,9 +23,15 @@ func main() {
 	//read config file
 
 	flag.Parse()
+
+	if *help {
+		flag.Usage()
+		return
+	}
+
 	cfg, err := config.ReadConfigFile(*configPath)
 	if err != nil {
-		fmt.Println("Error reading config file:", err)
+		log.Fatal("error reading config file", err)
 		return
 	}
 
@@ -32,7 +39,7 @@ func main() {
 
 	db, err := sql.Open("sqlite", cfg.DataDir)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("error opening database", err)
 		return
 	}
 
@@ -42,9 +49,20 @@ func main() {
 		return
 	}
 
+	defer db.Close()
+
+	queries := database.New(db)
+
+	res, err := queries.CreateTask(ctx, database.CreateTaskParams{
+		Title:       "Sample Task",
+		Description: sql.NullString{String: "This is a sample task", Valid: true},
+	})
+
 	fmt.Println("config path:", *configPath)
 	fmt.Println("help:", *help)
 	fmt.Println("config vals:", cfg)
+	fmt.Println("res:", res)
+	fmt.Println("err:", err)
 	//do db operations
 	//initialize bubbletea app
 }

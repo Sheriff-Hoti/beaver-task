@@ -14,13 +14,13 @@ INSERT INTO tasks (
     :title,
     :description,
     :due_date,
-    COALESCE(:priority, DEFAULT),
+    COALESCE(:priority, 5),    
     :tags,
     :parent_id,
     :completed_at,
     :progress,
-    COALESCE(:archived, DEFAULT),
-    COALESCE(:status, DEFAULT)
+    COALESCE(:archived, 0),
+    COALESCE(:status, 'NOT STARTED')
 )
 RETURNING *
 ;

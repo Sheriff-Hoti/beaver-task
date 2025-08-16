@@ -38,13 +38,13 @@ INSERT INTO tasks (
     ?1,
     ?2,
     ?3,
-    COALESCE(?4, DEFAULT),
+    COALESCE(?4, 5),    
     ?5,
     ?6,
     ?7,
     ?8,
-    COALESCE(?9, DEFAULT),
-    COALESCE(?10, DEFAULT)
+    COALESCE(?9, 0),
+    COALESCE(?10, 'NOT STARTED')
 )
 RETURNING id, title, description, created_at, updated_at, due_date, priority, tags, parent_id, completed_at, progress, archived, status
 `
