@@ -7,9 +7,11 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/Sheriff-Hoti/beaver-task/config"
-	"github.com/Sheriff-Hoti/beaver-task/database"
+	"github.com/Sheriff-Hoti/beaver-task/tui"
+	tea "github.com/charmbracelet/bubbletea"
 	_ "modernc.org/sqlite"
 )
 
@@ -39,30 +41,36 @@ func main() {
 
 	db, err := sql.Open("sqlite", cfg.DataDir)
 	if err != nil {
-		fmt.Println("error opening database", err)
+		log.Fatal("error opening database", err)
 		return
 	}
 
 	// create tables
 	if _, err := db.ExecContext(ctx, ddl); err != nil {
-		log.Fatal(err)
+		log.Fatal("error creating tables:", err)
 		return
 	}
 
 	defer db.Close()
 
-	queries := database.New(db)
+	// queries := database.New(db)
 
-	res, err := queries.CreateTask(ctx, database.CreateTaskParams{
-		Title:       "Sample Task",
-		Description: sql.NullString{String: "This is a sample task", Valid: true},
-	})
+	// res, err := queries.CreateTask(ctx, database.CreateTaskParams{
+	// 	Title:       "Sample Task",
+	// 	Description: sql.NullString{String: "This is a sample task", Valid: true},
+	// })
+
+	p := tea.NewProgram(tui.InitialModel())
+	if _, err := p.Run(); err != nil {
+		fmt.Printf("Alas, there's been an error: %v", err)
+		os.Exit(1)
+	}
 
 	fmt.Println("config path:", *configPath)
 	fmt.Println("help:", *help)
 	fmt.Println("config vals:", cfg)
-	fmt.Println("res:", res)
-	fmt.Println("err:", err)
+	// fmt.Println("res:", res)
+	// fmt.Println("err:", err)
 	//do db operations
 	//initialize bubbletea app
 }
