@@ -1,0 +1,1 @@
+next fuse the background and foreground stuff to manager because the manager must be responsible for list and keypairs and the backround only for the 	return appStyle.Render(m.list.View())
