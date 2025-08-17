@@ -11,6 +11,8 @@ type delegateKeyMap struct {
 	remove key.Binding
 }
 
+// newItemDelegate returns a list.DefaultDelegate used to render and handle events for an individual
+// list item (Task). It wires per-item key handling (choose/remove) and provides short/full help bindings.
 func newItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
 	d := list.NewDefaultDelegate()
 

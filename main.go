@@ -11,7 +11,7 @@ import (
 
 	"github.com/Sheriff-Hoti/beaver-task/config"
 	"github.com/Sheriff-Hoti/beaver-task/database"
-	"github.com/Sheriff-Hoti/beaver-task/tui"
+	tui "github.com/Sheriff-Hoti/beaver-task/tui"
 	tea "github.com/charmbracelet/bubbletea"
 	_ "modernc.org/sqlite"
 )
@@ -57,13 +57,17 @@ func main() {
 	queries := database.New(db)
 
 	initialTasks, err := queries.ListTasks(ctx, 1)
-
+	tui.InitialModel(initialTasks)
 	if err != nil {
 		log.Fatal("error listing tasks:", err)
 		return
 	}
+	//initialte the background and foreground here
+	manager := &tui.Manager{}
 
-	p := tea.NewProgram(tui.InitialModel(initialTasks), tea.WithAltScreen())
+	p := tea.NewProgram(
+		// tui.InitialModel(initialTasks)
+		manager, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)
