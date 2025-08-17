@@ -44,3 +44,7 @@ func (m *Foreground) View() string {
 
 	return foreStyle.Render(layout)
 }
+
+func NewForeground() *Foreground {
+	return &Foreground{}
+}

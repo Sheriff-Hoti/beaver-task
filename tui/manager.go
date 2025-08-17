@@ -17,24 +17,14 @@ type Manager struct {
 	state        sessionState
 	windowWidth  int
 	windowHeight int
-	foreground   tea.Model
-	background   tea.Model
+	Foreground   tea.Model
+	Background   tea.Model
 	overlay      tea.Model
 }
 
 // Init initialises the Manager on program load. It partly implements the tea.Model interface.
 func (m *Manager) Init() tea.Cmd {
-	m.state = mainView
-	m.foreground = &Foreground{}
-	m.background = &Background{}
-	m.overlay = overlay.New(
-		m.foreground,
-		m.background,
-		overlay.Center,
-		overlay.Center,
-		0,
-		0,
-	)
+
 	return nil
 }
 
@@ -60,11 +50,11 @@ func (m *Manager) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	fg, fgCmd := m.foreground.Update(message)
-	m.foreground = fg
+	fg, fgCmd := m.Foreground.Update(message)
+	m.Foreground = fg
 
-	bg, bgCmd := m.background.Update(message)
-	m.background = bg
+	bg, bgCmd := m.Background.Update(message)
+	m.Background = bg
 
 	cmds := []tea.Cmd{}
 	cmds = append(cmds, fgCmd, bgCmd)
@@ -78,5 +68,21 @@ func (m *Manager) View() string {
 	if m.state == modalView {
 		return m.overlay.View()
 	}
-	return m.background.View()
+	return m.Background.View()
+}
+
+func NewManager(background *Background, foreground *Foreground) *Manager {
+	return &Manager{
+		state:      mainView,
+		Foreground: foreground,
+		Background: background,
+		overlay: overlay.New(
+			foreground,
+			background,
+			overlay.Center,
+			overlay.Center,
+			0,
+			0,
+		),
+	}
 }

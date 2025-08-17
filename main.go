@@ -20,7 +20,6 @@ import (
 var ddl string
 
 func main() {
-	fmt.Println("init")
 	help := flag.Bool("help", false, "show help")
 	configPath := flag.String("config", config.GetDefaultConfigPath(), "path to config file")
 	//read config file
@@ -57,27 +56,18 @@ func main() {
 	queries := database.New(db)
 
 	initialTasks, err := queries.ListTasks(ctx, 1)
-	tui.InitialModel(initialTasks)
 	if err != nil {
 		log.Fatal("error listing tasks:", err)
 		return
 	}
 	//initialte the background and foreground here
-	manager := &tui.Manager{}
+	foreground := tui.NewForeground()
+	background := tui.NewBackground(queries, tui.FromDatabaseTasks(initialTasks))
+	manager := tui.NewManager(background, foreground)
 
-	p := tea.NewProgram(
-		// tui.InitialModel(initialTasks)
-		manager, tea.WithAltScreen())
+	p := tea.NewProgram(manager, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)
 	}
-
-	fmt.Println("config path:", *configPath)
-	fmt.Println("help:", *help)
-	fmt.Println("config vals:", cfg)
-	// fmt.Println("res:", res)
-	// fmt.Println("err:", err)
-	//do db operations
-	//initialize bubbletea app
 }
