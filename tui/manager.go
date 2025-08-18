@@ -73,6 +73,9 @@ func (m *Manager) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		m.windowWidth = msg.Width
 		m.windowHeight = msg.Height
 
+	case ItemChosenMsg:
+		m.state = modalView
+
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "esc":
@@ -85,7 +88,15 @@ func (m *Manager) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 				m.state = mainView
 			}
 			return m, nil
+
+		case "a":
+			if m.state == modalView {
+				//this blocks the background from adding a new task
+				return m, nil
+			}
+
 		}
+
 	}
 
 	fg, fgCmd := m.foreground.Update(message)
