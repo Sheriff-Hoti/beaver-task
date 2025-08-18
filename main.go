@@ -57,13 +57,12 @@ func main() {
 	queries := database.New(db)
 
 	initialTasks, err := queries.ListTasks(ctx, 1)
-	tui.InitialModel(initialTasks)
 	if err != nil {
 		log.Fatal("error listing tasks:", err)
 		return
 	}
 	//initialte the background and foreground here
-	manager := &tui.Manager{}
+	manager := tui.NewManager(initialTasks)
 
 	p := tea.NewProgram(
 		// tui.InitialModel(initialTasks)
