@@ -9,6 +9,7 @@ type listKeyMap struct {
 	togglePagination key.Binding
 	toggleHelpMenu   key.Binding
 	insertItem       key.Binding
+	quit             key.Binding
 }
 
 func newListKeyMap() *listKeyMap {
@@ -36,6 +37,10 @@ func newListKeyMap() *listKeyMap {
 		toggleHelpMenu: key.NewBinding(
 			key.WithKeys("H"),
 			key.WithHelp("H", "toggle help"),
+		),
+		quit: key.NewBinding(
+			key.WithKeys("q", "esc"),
+			key.WithHelp("q/esc", "quit"),
 		),
 	}
 }

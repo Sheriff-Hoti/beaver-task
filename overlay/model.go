@@ -5,6 +5,7 @@
 package overlay
 
 import (
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -24,7 +25,7 @@ const (
 // backbround and foreground models.
 type Model struct {
 	Foreground tea.Model
-	Background tea.Model
+	Background *list.Model
 	XPosition  Position
 	YPosition  Position
 	XOffset    int
@@ -32,7 +33,7 @@ type Model struct {
 }
 
 // New creates, instantiates, and returns a pointer to a new overlay Model.
-func New(fore tea.Model, back tea.Model, xPos Position, yPos Position, xOff int, yOff int) *Model {
+func New(fore tea.Model, back *list.Model, xPos Position, yPos Position, xOff int, yOff int) *Model {
 	return &Model{
 		Foreground: fore,
 		Background: back,

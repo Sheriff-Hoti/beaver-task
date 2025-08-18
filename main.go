@@ -61,9 +61,8 @@ func main() {
 		return
 	}
 	//initialte the background and foreground here
-	foreground := tui.NewForeground()
-	background := tui.NewBackground(queries, tui.FromDatabaseTasks(initialTasks))
-	manager := tui.NewManager(background, foreground)
+	// background := tui.NewBackground()
+	manager := tui.NewManager(queries, tui.FromDatabaseTasks(initialTasks))
 
 	p := tea.NewProgram(manager, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
