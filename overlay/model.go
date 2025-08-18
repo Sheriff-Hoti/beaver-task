@@ -25,7 +25,7 @@ const (
 // backbround and foreground models.
 type Model struct {
 	Foreground tea.Model
-	Background *list.Model
+	Background list.Model
 	XPosition  Position
 	YPosition  Position
 	XOffset    int
@@ -33,7 +33,7 @@ type Model struct {
 }
 
 // New creates, instantiates, and returns a pointer to a new overlay Model.
-func New(fore tea.Model, back *list.Model, xPos Position, yPos Position, xOff int, yOff int) *Model {
+func New(fore tea.Model, back list.Model, xPos Position, yPos Position, xOff int, yOff int) *Model {
 	return &Model{
 		Foreground: fore,
 		Background: back,
@@ -57,15 +57,15 @@ func (m *Model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 // View applies the compositing and handles rendering the view. It partly implements the tea.Model
 // interface.
 func (m *Model) View() string {
-	if m.Foreground == nil && m.Background == nil {
-		return ""
-	}
-	if m.Foreground == nil && m.Background != nil {
-		return m.Background.View()
-	}
-	if m.Foreground != nil && m.Background == nil {
-		return m.Foreground.View()
-	}
+	// if m.Foreground == nil && m.Background == nil {
+	// 	return ""
+	// }
+	// if m.Foreground == nil && m.Background != nil {
+	// 	return m.Background.View()
+	// }
+	// if m.Foreground != nil && m.Background == nil {
+	// 	return m.Foreground.View()
+	// }
 
 	return composite(
 		m.Foreground.View(),

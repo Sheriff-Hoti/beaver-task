@@ -89,14 +89,20 @@ func (m *Manager) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keys.insertItem):
 			m.delegateKeys.remove.SetEnabled(true)
-			newItem := &Item{
-				TaskTitle:       "New Task",
-				TaskDescription: "This is a new task",
+			if m.state == mainView {
+				m.state = modalView
+			} else {
+				m.state = mainView
 			}
-			//add the insert logic here
-			insCmd := m.list.InsertItem(0, newItem)
-			statusCmd := m.list.NewStatusMessage(statusMessageStyle("Added " + newItem.Title()))
-			return m, tea.Batch(insCmd, statusCmd)
+			// newItem := &Item{
+			// 	TaskTitle:       "New Task",
+			// 	TaskDescription: "This is a new task",
+			// }
+			// //add the insert logic here
+			// insCmd := m.list.InsertItem(0, newItem)
+			// statusCmd := m.list.NewStatusMessage(statusMessageStyle("Added " + newItem.Title()))
+			// return m, tea.Batch(insCmd, statusCmd)
+			return m, nil
 		}
 	}
 
@@ -122,7 +128,7 @@ func (m *Manager) View() string {
 	if m.state == modalView {
 		return m.overlay.View()
 	}
-	return m.list.View()
+	return appStyle.Render(m.list.View())
 
 }
 
@@ -150,11 +156,11 @@ func NewManager(queries *database.Queries, data_list []list.Item) *Manager {
 		queries:      queries,
 		keys:         listKeys,
 		delegateKeys: delegateKeys,
-		list:         *bg,
+		list:         bg,
 	}
 }
 
-func NewBackground(data_list []list.Item) *list.Model {
+func NewBackground(data_list []list.Item) list.Model {
 	var (
 		delegateKeys = newDelegateKeyMap()
 		listKeys     = newListKeyMap()
@@ -177,5 +183,5 @@ func NewBackground(data_list []list.Item) *list.Model {
 			listKeys.toggleHelpMenu,
 		}
 	}
-	return &new_list
+	return new_list
 }
