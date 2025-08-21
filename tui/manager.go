@@ -7,10 +7,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type sessionState int
+type viewState int
 
 const (
-	mainView sessionState = iota
+	mainView viewState = iota
 	modalView
 )
 
@@ -42,7 +42,7 @@ func fromDatabaseTasks(tasks []database.Task) []list.Item {
 
 // Manager implements tea.Model, and manages the browser UI.
 type Manager struct {
-	state        sessionState
+	state        viewState
 	windowWidth  int
 	windowHeight int
 	foreground   tea.Model
@@ -68,6 +68,8 @@ func (m *Manager) Init() tea.Cmd {
 
 // Update handles event and manages internal state. It partly implements the tea.Model interface.
 func (m *Manager) Update(message tea.Msg) (tea.Model, tea.Cmd) {
+	cmds := []tea.Cmd{}
+
 	switch msg := message.(type) {
 	case tea.WindowSizeMsg:
 		m.windowWidth = msg.Width
@@ -76,26 +78,23 @@ func (m *Manager) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	case ItemChosenMsg:
 		m.state = modalView
 
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "q", "esc":
-			return m, tea.Quit
+	case ViewState:
+		m.state = msg.State
 
-		case " ":
-			if m.state == mainView {
-				m.state = modalView
-			} else {
-				m.state = mainView
-			}
-			return m, nil
+		// case tea.KeyMsg:
+		// 	switch msg.String() {
+		// 	case "q", "esc":
+		// 		return m, tea.Quit
 
-		case "a":
-			if m.state == modalView {
-				//this blocks the background from adding a new task
-				return m, nil
-			}
+		// 		// case " ":
+		// 		// 	if m.state == mainView {
+		// 		// 		m.state = modalView
+		// 		// 	} else {
+		// 		// 		m.state = mainView
+		// 		// 	}
+		// 		// 	return m, nil
 
-		}
+		// 	}
 
 	}
 
@@ -105,7 +104,6 @@ func (m *Manager) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	bg, bgCmd := m.background.Update(message)
 	m.background = bg
 
-	cmds := []tea.Cmd{}
 	cmds = append(cmds, fgCmd, bgCmd)
 
 	return m, tea.Batch(cmds...)
@@ -122,7 +120,7 @@ func (m *Manager) View() string {
 
 func NewManager(tasks []database.Task) *Manager {
 
-	foreground := &Foreground{}
+	foreground := NewForeground()
 	bacground := NewBackground(fromDatabaseTasks(tasks))
 	overlay := overlay.New(
 		foreground,

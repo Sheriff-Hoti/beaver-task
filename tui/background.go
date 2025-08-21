@@ -13,6 +13,7 @@ type Background struct {
 	list         list.Model
 	keys         *listKeyMap
 	delegateKeys *delegateKeyMap
+	state        viewState
 }
 
 // Init initialises the Manager on program load. It partly implements the tea.Manager interface.
@@ -31,7 +32,16 @@ func (m *Background) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		h, v := appStyle.GetFrameSize()
 		m.list.SetSize(msg.Width-h, msg.Height-v)
 
+	case ViewState:
+		m.state = msg.State
+
 	case tea.KeyMsg:
+
+		if m.state == modalView {
+			// If we're in modal view, don't process any key events.
+			return m, nil
+		}
+
 		// Don't match any of the keys below if we're actively filtering.
 		if m.list.FilterState() == list.Filtering {
 			break
@@ -62,15 +72,17 @@ func (m *Background) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case key.Matches(msg, m.keys.insertItem):
-			m.delegateKeys.remove.SetEnabled(true)
-			newItem := &Task{
-				TaskTitle:       "New Task",
-				TaskDescription: "This is a new taskaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-			}
-			//add the insert logic here
-			insCmd := m.list.InsertItem(0, newItem)
-			statusCmd := m.list.NewStatusMessage(statusMessageStyle("Added " + newItem.Title()))
-			return m, tea.Batch(insCmd, statusCmd)
+
+			// m.delegateKeys.remove.SetEnabled(true)
+			// newItem := &Task{
+			// 	TaskTitle:       "New Task",
+			// 	TaskDescription: "This is a new taskaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			// }
+			// //add the insert logic here
+			// insCmd := m.list.InsertItem(0, newItem)
+			// statusCmd := m.list.NewStatusMessage(statusMessageStyle("Added " + newItem.Title()))
+			// return m, tea.Batch(insCmd, statusCmd)
+			return m, tea.Batch(changeViewState(modalView))
 		}
 	}
 
@@ -92,7 +104,7 @@ func (m *Background) View() string {
 func NewBackground(list_items []list.Item) *Background {
 	var (
 		delegateKeys = newDelegateKeyMap()
-		listKeys     = newListKeyMap()
+		listKeys     = backroundListKeyMap()
 	)
 
 	delegate := newItemDelegate(delegateKeys)
@@ -100,7 +112,7 @@ func NewBackground(list_items []list.Item) *Background {
 	tasks := list.New(list_items, delegate, 0, 0)
 	tasks.SetShowStatusBar(false)
 	tasks.SetFilteringEnabled(true)
-	tasks.SetShowHelp(false)
+	tasks.SetShowHelp(true)
 
 	tasks.Title = "Tasks"
 	tasks.Styles.Title = titleStyle

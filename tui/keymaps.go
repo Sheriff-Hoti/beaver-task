@@ -11,7 +11,7 @@ type listKeyMap struct {
 	insertItem       key.Binding
 }
 
-func newListKeyMap() *listKeyMap {
+func backroundListKeyMap() *listKeyMap {
 	return &listKeyMap{
 		insertItem: key.NewBinding(
 			key.WithKeys("a"),
