@@ -1,6 +1,8 @@
 package tui
 
-import "github.com/charmbracelet/bubbles/key"
+import (
+	"github.com/charmbracelet/bubbles/key"
+)
 
 type listKeyMap struct {
 	toggleSpinner    key.Binding
@@ -36,6 +38,34 @@ func backroundListKeyMap() *listKeyMap {
 		toggleHelpMenu: key.NewBinding(
 			key.WithKeys("H"),
 			key.WithHelp("H", "toggle help"),
+		),
+	}
+}
+
+type modalKeyMap struct {
+	submit   key.Binding
+	cancel   key.Binding
+	quit     key.Binding
+	editItem key.Binding
+}
+
+func modalKeyMaps() *modalKeyMap {
+	return &modalKeyMap{
+		submit: key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("enter", "submit"),
+		),
+		cancel: key.NewBinding(
+			key.WithKeys("esc"),
+			key.WithHelp("esc", "cancel"),
+		),
+		quit: key.NewBinding(
+			key.WithKeys("ctrl+c"),
+			key.WithHelp("ctrl+c", "close modal"),
+		),
+		editItem: key.NewBinding(
+			key.WithKeys("e"),
+			key.WithHelp("e", "edit item"),
 		),
 	}
 }

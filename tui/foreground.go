@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	huh "github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
@@ -12,6 +13,7 @@ type Foreground struct {
 	windowHeight int
 	state        viewState
 	form         *huh.Form
+	keys         *modalKeyMap
 }
 
 // Init initialises the Model on program load. It partly implements the tea.Model interface.
@@ -42,15 +44,17 @@ func (m *Foreground) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			// If we're in modal view, don't process any key events.
 			return m, nil
 		}
-		switch msg.String() {
-		case "q", "esc":
-			return m, tea.Quit
+		switch {
 
-		case "enter":
-
+		case key.Matches(msg, m.keys.cancel):
+			return m, tea.Batch(changeViewState(mainView))
+		case key.Matches(msg, m.keys.submit):
 			m.form = NewForm()
 			return m, tea.Batch(changeViewState(mainView), addItemCmd("niiice"))
-
+		case key.Matches(msg, m.keys.editItem):
+			return m, nil
+		case key.Matches(msg, m.keys.quit):
+			return m, tea.Quit
 		}
 	}
 	//if focus issue run form init eveytime the modal opens
@@ -93,6 +97,7 @@ func NewForeground() *Foreground {
 		windowHeight: 0,
 		state:        mainView,
 		form:         NewForm(),
+		keys:         modalKeyMaps(),
 	}
 }
 
