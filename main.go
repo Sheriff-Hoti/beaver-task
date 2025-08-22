@@ -62,7 +62,7 @@ func main() {
 		return
 	}
 	//initialte the background and foreground here
-	manager := tui.NewManager(initialTasks)
+	manager := tui.NewManager(initialTasks, queries, ctx)
 
 	p := tea.NewProgram(
 		// tui.InitialModel(initialTasks)

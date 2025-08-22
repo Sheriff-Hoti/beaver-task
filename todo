@@ -1,0 +1,55 @@
+func (m *Manager) Update(message tea.Msg) (tea.Model, tea.Cmd) {
+	var cmds []tea.Cmd
+
+	switch msg := message.(type) {
+	case tea.WindowSizeMsg:
+		m.windowWidth = msg.Width
+		m.windowHeight = msg.Height
+
+	case ItemChosenMsg:
+		m.state = modalView
+		cmds = append(cmds, modalStateChangedCmd(m.state))
+
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "q", "esc":
+			return m, tea.Quit
+
+		case " ":
+			if m.state == mainView {
+				m.state = modalView
+			} else {
+				m.state = mainView
+			}
+			// collect cmd, but don’t return yet
+			cmds = append(cmds, modalStateChangedCmd(m.state))
+
+		case "a":
+			if m.state == modalView {
+				// block action, but still let children see the msg
+				return m, nil
+			}
+		}
+	}
+
+	// Now update children with the *original* message
+	fg, fgCmd := m.foreground.Update(message)
+	m.foreground = fg
+
+	bg, bgCmd := m.background.Update(message)
+	m.background = bg
+
+	// Collect all commands
+	cmds = append(cmds, fgCmd, bgCmd)
+
+	return m, tea.Batch(cmds...)
+}
+
+
+maybe this a solution
+
+
+//fix buttons on foreground
+//add a button when it will simply close the modal
+//add a button where it will simply close all the app while still in modal
+//chech the huh form validations

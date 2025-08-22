@@ -1,8 +1,6 @@
 package tui
 
 import (
-	"fmt"
-
 	tea "github.com/charmbracelet/bubbletea"
 	huh "github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
@@ -23,7 +21,12 @@ func (m *Foreground) Init() tea.Cmd {
 
 // Update handles event and manages internal state. It partly implements the tea.Model interface.
 func (m *Foreground) Update(message tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
+	var cmds []tea.Cmd
+
+	// if m.form.State == huh.StateCompleted {
+	// 	m.form = NewForm()
+	// 	return m, tea.Batch(changeViewState(mainView))
+	// }
 
 	switch msg := message.(type) {
 	case tea.WindowSizeMsg:
@@ -43,19 +46,21 @@ func (m *Foreground) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		case "q", "esc":
 			return m, tea.Quit
 
-		case " ":
+		case "enter":
 
-			return m, tea.Batch(changeViewState(mainView))
+			m.form = NewForm()
+			return m, tea.Batch(changeViewState(mainView), addItemCmd("niiice"))
 
 		}
 	}
-
+	//if focus issue run form init eveytime the modal opens
 	form, cmd := m.form.Update(message)
 	if f, ok := form.(*huh.Form); ok {
 		m.form = f
+		cmds = append(cmds, cmd)
 	}
 
-	return m, cmd
+	return m, tea.Batch(cmds...)
 }
 
 // View applies and styling and handles rendering the view. It partly implements the tea.Model
@@ -65,18 +70,18 @@ func (m *Foreground) View() string {
 		Border(lipgloss.RoundedBorder(), true).
 		BorderForeground(lipgloss.Color("6")).
 		Padding(0, 1).
-		Width(m.windowWidth / 2).
-		Height(m.windowHeight / 2).MarginLeft(m.windowWidth / 4).MarginRight(m.windowWidth / 4)
+		Width(m.windowWidth / 3).
+		Height(m.windowHeight / 3)
+		// .MarginLeft(m.windowWidth / 4).MarginRight(m.windowWidth / 4)
 
 	// boldStyle := lipgloss.NewStyle().Bold(true)
 	// title := boldStyle.Render("Bubble Tea Overlay")
 	// content := "Hello! I'm in a modal window.\n\nPress <space> to close the window."
 	// layout := lipgloss.JoinVertical(lipgloss.Left, title, content)
-	if m.form.State == huh.StateCompleted {
-		class := m.form.GetString("class")
-		level := m.form.GetInt("level")
-		return fmt.Sprintf("You selected: %s, Lvl. %d", class, level)
-	}
+	// if m.form.State == huh.StateCompleted {
+	// 	title := m.form.GetString("title")
+	// 	return fmt.Sprintf("You selected: %s,", title)
+	// }
 
 	return foreStyle.Render(m.form.View())
 }
@@ -87,18 +92,15 @@ func NewForeground() *Foreground {
 		windowWidth:  0,
 		windowHeight: 0,
 		state:        mainView,
-		form: huh.NewForm(
-			huh.NewGroup(
-				huh.NewSelect[string]().
-					Key("class").
-					Options(huh.NewOptions("Warrior", "Mage", "Rogue")...).
-					Title("Choose your class"),
-
-				huh.NewSelect[int]().
-					Key("level").
-					Options(huh.NewOptions(1, 20, 9999)...).
-					Title("Choose your level"),
-			),
-		),
+		form:         NewForm(),
 	}
+}
+
+func NewForm() *huh.Form {
+	title_input := huh.NewInput().Title("Title").Prompt(">").Key("title")
+	return huh.NewForm(
+		huh.NewGroup(
+			title_input,
+		),
+	)
 }

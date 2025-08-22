@@ -1,6 +1,9 @@
 package tui
 
 import (
+	"context"
+	"database/sql"
+
 	"github.com/Sheriff-Hoti/beaver-task/database"
 	"github.com/Sheriff-Hoti/beaver-task/overlay"
 	"github.com/charmbracelet/bubbles/list"
@@ -48,6 +51,8 @@ type Manager struct {
 	foreground   tea.Model
 	background   tea.Model
 	overlay      tea.Model
+	queries      *database.Queries
+	ctx          context.Context
 }
 
 // Init initialises the Manager on program load. It partly implements the tea.Model interface.
@@ -63,7 +68,10 @@ func (m *Manager) Init() tea.Cmd {
 	// 	0,
 	// 	0,
 	// )
-	return nil
+	return tea.Batch(
+		m.foreground.Init(),
+		m.background.Init(),
+	)
 }
 
 // Update handles event and manages internal state. It partly implements the tea.Model interface.
@@ -75,11 +83,21 @@ func (m *Manager) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		m.windowWidth = msg.Width
 		m.windowHeight = msg.Height
 
+	case AddItemMsg:
+		m.queries.CreateTask(m.ctx, database.CreateTaskParams{
+			Title:       msg.Value,
+			Description: sql.NullString{String: "No description", Valid: true},
+		})
+
 	case ItemChosenMsg:
 		m.state = modalView
 
 	case ViewState:
 		m.state = msg.State
+		if m.state == modalView {
+			// focus the form when modal opens
+			cmds = append(cmds, m.foreground.Init())
+		}
 
 		// case tea.KeyMsg:
 		// 	switch msg.String() {
@@ -118,7 +136,7 @@ func (m *Manager) View() string {
 	return m.background.View()
 }
 
-func NewManager(tasks []database.Task) *Manager {
+func NewManager(tasks []database.Task, queries *database.Queries, ctx context.Context) *Manager {
 
 	foreground := NewForeground()
 	bacground := NewBackground(fromDatabaseTasks(tasks))
@@ -136,5 +154,7 @@ func NewManager(tasks []database.Task) *Manager {
 		foreground: foreground,
 		background: bacground,
 		overlay:    overlay,
+		queries:    queries,
+		ctx:        ctx,
 	}
 }
