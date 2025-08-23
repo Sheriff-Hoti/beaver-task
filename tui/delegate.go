@@ -8,7 +8,7 @@ import (
 
 type delegateKeyMap struct {
 	choose key.Binding
-	remove key.Binding
+	delete key.Binding
 }
 
 // newItemDelegate returns a list.DefaultDelegate used to render and handle events for an individual
@@ -32,20 +32,20 @@ func newItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
 				return func() tea.Msg {
 					return ItemChosenMsg{Value: title}
 				}
-			case key.Matches(msg, keys.remove):
+			case key.Matches(msg, keys.delete):
 				index := m.Index()
 				m.RemoveItem(index)
 				if len(m.Items()) == 0 {
-					keys.remove.SetEnabled(false)
+					keys.delete.SetEnabled(false)
 				}
-				return m.NewStatusMessage(statusMessageStyle("Deleted " + title))
+				return tea.Batch(m.NewStatusMessage(statusMessageStyle("Deleted "+title)), deleteItemCmd(title))
 			}
 		}
 
 		return nil
 	}
 
-	help := []key.Binding{keys.choose, keys.remove}
+	help := []key.Binding{keys.choose, keys.delete}
 
 	d.ShortHelpFunc = func() []key.Binding {
 		return help
@@ -63,7 +63,7 @@ func newItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
 func (d delegateKeyMap) ShortHelp() []key.Binding {
 	return []key.Binding{
 		d.choose,
-		d.remove,
+		d.delete,
 	}
 }
 
@@ -73,7 +73,7 @@ func (d delegateKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{
 			d.choose,
-			d.remove,
+			d.delete,
 		},
 	}
 }
@@ -84,9 +84,9 @@ func newDelegateKeyMap() *delegateKeyMap {
 			key.WithKeys("enter"),
 			key.WithHelp("enter", "choose"),
 		),
-		remove: key.NewBinding(
-			key.WithKeys("x", "backspace"),
-			key.WithHelp("x", "delete"),
+		delete: key.NewBinding(
+			key.WithKeys("ctrl+x", "backspace"),
+			key.WithHelp("ctrl+x/backspace", "delete"),
 		),
 	}
 }

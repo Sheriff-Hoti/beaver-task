@@ -2,7 +2,6 @@ package tui
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/Sheriff-Hoti/beaver-task/database"
 	"github.com/Sheriff-Hoti/beaver-task/overlay"
@@ -85,12 +84,14 @@ func (m *Manager) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 	case AddItemMsg:
 		m.queries.CreateTask(m.ctx, database.CreateTaskParams{
-			Title:       msg.Value,
-			Description: sql.NullString{String: "No description", Valid: true},
+			Title: msg.Value,
 		})
 
 	case ItemChosenMsg:
 		m.state = modalView
+
+	case DeleteItemMsg:
+		m.queries.DeleteTaskByTitle(m.ctx, msg.Title)
 
 	case ViewState:
 		m.state = msg.State

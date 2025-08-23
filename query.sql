@@ -35,3 +35,7 @@ OFFSET :offset;
 -- name: CountTasks :one
 SELECT COUNT(*) AS total
 FROM tasks;
+
+-- name: DeleteTaskByTitle :exec
+DELETE FROM tasks
+WHERE title = :title;

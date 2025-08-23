@@ -9,6 +9,10 @@ type ItemChosenMsg struct {
 	Value string
 }
 
+type DeleteItemMsg struct {
+	Title string
+}
+
 type ViewState struct {
 	State viewState
 }
@@ -22,6 +26,12 @@ type StatusMessageTimeoutMsg struct{}
 func chooseItemCmd(val string) tea.Cmd {
 	return func() tea.Msg {
 		return ItemChosenMsg{Value: val}
+	}
+}
+
+func deleteItemCmd(title string) tea.Cmd {
+	return func() tea.Msg {
+		return DeleteItemMsg{Title: title}
 	}
 }
 
