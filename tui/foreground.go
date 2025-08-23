@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"time"
+
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	huh "github.com/charmbracelet/huh"
@@ -9,16 +11,40 @@ import (
 
 // Model implements tea.Model, and manages the browser UI.
 type Foreground struct {
-	windowWidth  int
-	windowHeight int
-	state        viewState
-	form         *huh.Form
-	keys         *modalKeyMap
+	windowWidth           int
+	windowHeight          int
+	state                 viewState
+	form                  *huh.Form
+	keys                  *modalKeyMap
+	statusMessageTimer    *time.Timer
+	StatusMessageLifetime time.Duration
+	statusMessage         string
 }
 
 // Init initialises the Model on program load. It partly implements the tea.Model interface.
 func (m *Foreground) Init() tea.Cmd {
 	return m.form.Init()
+}
+
+func (m Foreground) appErrorBoundaryView(text string) string {
+	return lipgloss.PlaceHorizontal(
+		m.windowWidth,
+		lipgloss.Left,
+		lipgloss.NewStyle().
+			Foreground(indigo).
+			Bold(true).
+			Padding(0, 1, 0, 2).Render(text),
+		lipgloss.WithWhitespaceChars("/"),
+		lipgloss.WithWhitespaceForeground(red),
+	)
+}
+
+func (m Foreground) errorView() string {
+	var s string
+	for _, err := range m.form.Errors() {
+		s += err.Error()
+	}
+	return s
 }
 
 // Update handles event and manages internal state. It partly implements the tea.Model interface.
@@ -38,6 +64,9 @@ func (m *Foreground) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	case ViewState:
 		m.state = msg.State
 
+	case StatusMessageTimeoutMsg:
+		m.hideStatusMessage()
+
 	case tea.KeyMsg:
 
 		if m.state == mainView {
@@ -48,9 +77,11 @@ func (m *Foreground) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keys.cancel):
 			return m, tea.Batch(changeViewState(mainView))
-		case key.Matches(msg, m.keys.submit):
-			m.form = NewForm()
-			return m, tea.Batch(changeViewState(mainView), addItemCmd("niiice"))
+		// case key.Matches(msg, m.keys.submit):
+		// 	m.form = NewForm()
+		// 	// return m, tea.Batch(changeViewState(mainView), addItemCmd("niiice"))
+		// 	return m, nil
+
 		case key.Matches(msg, m.keys.editItem):
 			return m, nil
 		case key.Matches(msg, m.keys.quit):
@@ -64,12 +95,19 @@ func (m *Foreground) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	}
 
+	if m.form.State == huh.StateCompleted {
+		// Quit when the form is done.
+		m.form = NewForm()
+		cmds = append(cmds, changeViewState(mainView), addItemCmd("niiice"))
+	}
+
 	return m, tea.Batch(cmds...)
 }
 
 // View applies and styling and handles rendering the view. It partly implements the tea.Model
 // interface.
 func (m *Foreground) View() string {
+
 	foreStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder(), true).
 		BorderForeground(lipgloss.Color("6")).
@@ -86,6 +124,10 @@ func (m *Foreground) View() string {
 	// 	title := m.form.GetString("title")
 	// 	return fmt.Sprintf("You selected: %s,", title)
 	// }
+	if len(m.form.Errors()) > 0 {
+		// return m.appErrorBoundaryView(m.errorView())
+		m.NewStatusMessage(m.errorView())
+	}
 
 	return foreStyle.Render(m.form.View())
 }
@@ -101,11 +143,34 @@ func NewForeground() *Foreground {
 	}
 }
 
+func (m *Foreground) NewStatusMessage(s string) tea.Cmd {
+	m.statusMessage = s
+	if m.statusMessageTimer != nil {
+		m.statusMessageTimer.Stop()
+	}
+
+	m.statusMessageTimer = time.NewTimer(m.StatusMessageLifetime)
+
+	// Wait for timeout
+	return func() tea.Msg {
+		<-m.statusMessageTimer.C
+		return StatusMessageTimeoutMsg{}
+	}
+}
+
+func (m *Foreground) hideStatusMessage() {
+	m.statusMessage = ""
+	if m.statusMessageTimer != nil {
+		m.statusMessageTimer.Stop()
+	}
+}
+
 func NewForm() *huh.Form {
-	title_input := huh.NewInput().Title("Title").Prompt(">").Key("title")
-	return huh.NewForm(
+	title_input := huh.NewInput().Title("Title").Prompt(">").Key("title").Validate(huh.ValidateNotEmpty())
+	form := huh.NewForm(
 		huh.NewGroup(
 			title_input,
-		),
+		).WithShowHelp(true),
 	)
+	return form
 }
