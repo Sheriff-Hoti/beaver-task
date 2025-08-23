@@ -51,11 +51,6 @@ func (m Foreground) errorView() string {
 func (m *Foreground) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
-	// if m.form.State == huh.StateCompleted {
-	// 	m.form = NewForm()
-	// 	return m, tea.Batch(changeViewState(mainView))
-	// }
-
 	switch msg := message.(type) {
 	case tea.WindowSizeMsg:
 		m.windowWidth = msg.Width
@@ -63,6 +58,15 @@ func (m *Foreground) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 	case ViewState:
 		m.state = msg.State
+		if m.state == modalView {
+			m.form = NewForm()
+			return m, m.form.Init()
+		}
+		// if m.state == modalView {
+		// 	// focus the form when modal opens
+		// 	m.form = NewForm()
+		// 	cmds = append(cmds, m.form.Init())
+		// }
 
 	case StatusMessageTimeoutMsg:
 		m.hideStatusMessage()
@@ -88,6 +92,7 @@ func (m *Foreground) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	}
+
 	//if focus issue run form init eveytime the modal opens
 	form, cmd := m.form.Update(message)
 	if f, ok := form.(*huh.Form); ok {
@@ -97,8 +102,9 @@ func (m *Foreground) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 	if m.form.State == huh.StateCompleted {
 		// Quit when the form is done.
+		title := m.form.GetString("title")
+		cmds = append(cmds, changeViewState(mainView), addItemCmd(title))
 		m.form = NewForm()
-		cmds = append(cmds, changeViewState(mainView), addItemCmd("niiice"))
 	}
 
 	return m, tea.Batch(cmds...)

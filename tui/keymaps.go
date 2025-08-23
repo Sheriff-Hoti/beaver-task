@@ -63,9 +63,9 @@ func modalKeyMaps() *modalKeyMap {
 			key.WithKeys("ctrl+c"),
 			key.WithHelp("ctrl+c", "close modal"),
 		),
-		editItem: key.NewBinding(
-			key.WithKeys("e"),
-			key.WithHelp("e", "edit item"),
-		),
+		// editItem: key.NewBinding(
+		// 	key.WithKeys("e"),
+		// 	key.WithHelp("e", "edit item"),
+		// ),
 	}
 }

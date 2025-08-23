@@ -56,7 +56,7 @@ func main() {
 
 	queries := database.New(db)
 
-	initialTasks, err := queries.ListTasks(ctx, 1)
+	initialTasks, err := queries.ListTasks(ctx, 0)
 	if err != nil {
 		log.Fatal("error listing tasks:", err)
 		return

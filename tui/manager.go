@@ -94,26 +94,12 @@ func (m *Manager) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 	case ViewState:
 		m.state = msg.State
-		if m.state == modalView {
-			// focus the form when modal opens
-			cmds = append(cmds, m.foreground.Init())
-		}
-
-		// case tea.KeyMsg:
-		// 	switch msg.String() {
-		// 	case "q", "esc":
-		// 		return m, tea.Quit
-
-		// 		// case " ":
-		// 		// 	if m.state == mainView {
-		// 		// 		m.state = modalView
-		// 		// 	} else {
-		// 		// 		m.state = mainView
-		// 		// 	}
-		// 		// 	return m, nil
-
-		// 	}
-
+		// if m.state == modalView {
+		// 	// reset & focus the form when opening the modal
+		// 	fg, fgCmd := m.foreground.Update(ResetFormMsg{})
+		// 	m.foreground = fg
+		// 	cmds = append(cmds, fgCmd)
+		// }
 	}
 
 	fg, fgCmd := m.foreground.Update(message)

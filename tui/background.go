@@ -35,6 +35,10 @@ func (m *Background) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	case ViewState:
 		m.state = msg.State
 
+	case AddItemMsg:
+		m.list.InsertItem(0, &Task{TaskTitle: msg.Value, TaskDescription: "This is a new task"})
+		m.list.NewStatusMessage(statusMessageStyle("Added " + msg.Value))
+
 	case tea.KeyMsg:
 
 		if m.state == modalView {
