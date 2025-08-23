@@ -21,8 +21,6 @@ type AddItemMsg struct {
 	Value string
 }
 
-type StatusMessageTimeoutMsg struct{}
-
 func chooseItemCmd(val string) tea.Cmd {
 	return func() tea.Msg {
 		return ItemChosenMsg{Value: val}

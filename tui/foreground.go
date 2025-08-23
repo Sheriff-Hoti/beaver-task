@@ -1,8 +1,6 @@
 package tui
 
 import (
-	"time"
-
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	huh "github.com/charmbracelet/huh"
@@ -11,14 +9,11 @@ import (
 
 // Model implements tea.Model, and manages the browser UI.
 type Foreground struct {
-	windowWidth           int
-	windowHeight          int
-	state                 viewState
-	form                  *huh.Form
-	keys                  *modalKeyMap
-	statusMessageTimer    *time.Timer
-	StatusMessageLifetime time.Duration
-	statusMessage         string
+	windowWidth  int
+	windowHeight int
+	state        viewState
+	form         *huh.Form
+	keys         *modalKeyMap
 }
 
 // Init initialises the Model on program load. It partly implements the tea.Model interface.
@@ -68,9 +63,6 @@ func (m *Foreground) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		// 	cmds = append(cmds, m.form.Init())
 		// }
 
-	case StatusMessageTimeoutMsg:
-		m.hideStatusMessage()
-
 	case tea.KeyMsg:
 
 		if m.state == mainView {
@@ -93,6 +85,10 @@ func (m *Foreground) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	if m.form == nil {
+		return m, tea.Batch(cmds...)
+	}
+
 	//if focus issue run form init eveytime the modal opens
 	form, cmd := m.form.Update(message)
 	if f, ok := form.(*huh.Form); ok {
@@ -104,7 +100,7 @@ func (m *Foreground) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		// Quit when the form is done.
 		title := m.form.GetString("title")
 		cmds = append(cmds, changeViewState(mainView), addItemCmd(title))
-		m.form = NewForm()
+		m.form = nil
 	}
 
 	return m, tea.Batch(cmds...)
@@ -118,7 +114,7 @@ func (m *Foreground) View() string {
 		Border(lipgloss.RoundedBorder(), true).
 		BorderForeground(lipgloss.Color("6")).
 		Padding(0, 1).
-		Width(m.windowWidth / 3).
+		Width(m.windowWidth / 2).
 		Height(m.windowHeight / 3)
 		// .MarginLeft(m.windowWidth / 4).MarginRight(m.windowWidth / 4)
 
@@ -130,12 +126,11 @@ func (m *Foreground) View() string {
 	// 	title := m.form.GetString("title")
 	// 	return fmt.Sprintf("You selected: %s,", title)
 	// }
-	if len(m.form.Errors()) > 0 {
-		// return m.appErrorBoundaryView(m.errorView())
-		m.NewStatusMessage(m.errorView())
+	if m.form == nil {
+		return ""
 	}
 
-	return foreStyle.Render(m.form.View())
+	return foreStyle.Render(lipgloss.JoinVertical(lipgloss.Left, title.Render("Create a Task"), m.form.View()))
 }
 
 func NewForeground() *Foreground {
@@ -149,30 +144,8 @@ func NewForeground() *Foreground {
 	}
 }
 
-func (m *Foreground) NewStatusMessage(s string) tea.Cmd {
-	m.statusMessage = s
-	if m.statusMessageTimer != nil {
-		m.statusMessageTimer.Stop()
-	}
-
-	m.statusMessageTimer = time.NewTimer(m.StatusMessageLifetime)
-
-	// Wait for timeout
-	return func() tea.Msg {
-		<-m.statusMessageTimer.C
-		return StatusMessageTimeoutMsg{}
-	}
-}
-
-func (m *Foreground) hideStatusMessage() {
-	m.statusMessage = ""
-	if m.statusMessageTimer != nil {
-		m.statusMessageTimer.Stop()
-	}
-}
-
 func NewForm() *huh.Form {
-	title_input := huh.NewInput().Title("Title").Prompt(">").Key("title").Validate(huh.ValidateNotEmpty())
+	title_input := huh.NewInput().Title("Title").Prompt("> ").Key("title").Validate(huh.ValidateNotEmpty())
 	form := huh.NewForm(
 		huh.NewGroup(
 			title_input,
