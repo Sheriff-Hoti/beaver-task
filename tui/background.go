@@ -111,7 +111,7 @@ func NewBackground(list_items []list.Item) *Background {
 		listKeys     = backroundListKeyMap()
 	)
 
-	delegate := newItemDelegate(delegateKeys)
+	delegate := NewCustomDelegate(delegateKeys)
 
 	tasks := list.New(list_items, delegate, 0, 0)
 	tasks.SetShowStatusBar(false)

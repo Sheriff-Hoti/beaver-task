@@ -69,3 +69,21 @@ func modalKeyMaps() *modalKeyMap {
 		// ),
 	}
 }
+
+type delegateKeyMap struct {
+	choose key.Binding
+	delete key.Binding
+}
+
+func newDelegateKeyMap() *delegateKeyMap {
+	return &delegateKeyMap{
+		choose: key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("enter", "choose"),
+		),
+		delete: key.NewBinding(
+			key.WithKeys("ctrl+x", "backspace"),
+			key.WithHelp("ctrl+x/backspace", "delete"),
+		),
+	}
+}

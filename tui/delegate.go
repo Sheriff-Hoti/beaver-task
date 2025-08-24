@@ -121,15 +121,53 @@ type CustomDelegate struct {
 }
 
 // NewCustomDelegate creates a new delegate with default styles.
-func NewCustomDelegate() CustomDelegate {
+func NewCustomDelegate(keys *delegateKeyMap) CustomDelegate {
 	const defaultHeight = 2
 	const defaultSpacing = 1
-	return CustomDelegate{
+	d := CustomDelegate{
 		ShowDescription: true,
 		Styles:          NewCustomItemStyles(),
 		height:          defaultHeight,
 		spacing:         defaultSpacing,
 	}
+
+	d.UpdateFunc = func(msg tea.Msg, m *list.Model) tea.Cmd {
+		var title string
+
+		if i, ok := m.SelectedItem().(*Task); ok {
+			title = i.Title()
+		} else {
+			return nil
+		}
+
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			switch {
+			case key.Matches(msg, keys.choose):
+				return tea.Batch(chooseItemCmd(title), m.NewStatusMessage(statusMessageStyle("Choose "+title)))
+			case key.Matches(msg, keys.delete):
+				index := m.Index()
+				m.RemoveItem(index)
+				if len(m.Items()) == 0 {
+					keys.delete.SetEnabled(false)
+				}
+				return tea.Batch(m.NewStatusMessage(statusMessageStyle("Deleted "+title)), deleteItemCmd(title))
+			}
+		}
+
+		return nil
+	}
+	help := []key.Binding{keys.choose, keys.delete}
+
+	d.ShortHelpFunc = func() []key.Binding {
+		return help
+	}
+
+	d.FullHelpFunc = func() [][]key.Binding {
+		return [][]key.Binding{help}
+	}
+
+	return d
 }
 
 // SetHeight sets delegate's preferred height.
