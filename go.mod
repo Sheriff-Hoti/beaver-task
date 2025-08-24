@@ -5,6 +5,7 @@ go 1.24.5
 require (
 	github.com/charmbracelet/bubbletea v1.3.6
 	github.com/charmbracelet/huh v0.7.0
+	github.com/mergestat/timediff v0.0.4
 	modernc.org/sqlite v1.38.2
 )
 
@@ -12,7 +13,6 @@ require (
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/catppuccin/go v0.3.0 // indirect
 	github.com/charmbracelet/x/exp/strings v0.0.0-20240722160745-212f7b056ed0 // indirect
-	github.com/mergestat/timediff v0.0.4 // indirect
 	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
 	github.com/sahilm/fuzzy v0.1.1 // indirect
 )
