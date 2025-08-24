@@ -11,16 +11,16 @@
       nixpkgs,
     }:
     let
-      #System types to support.
+      # System types to support
       supportedSystems = [
         "x86_64-linux"
         "aarch64-linux"
       ];
 
-      # Helper function to generate an attrset '{ x86_64-linux = f "x86_64-linux"; ... }'.
+      # Helper function to generate an attrset '{ x86_64-linux = f "x86_64-linux"; ... }'
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
 
-      # Nixpkgs instantiated for supported system types.
+      # Nixpkgs instantiated for supported system types
       nixpkgsFor = forAllSystems (system: import nixpkgs { inherit system; });
 
       version = "0.1.0";
@@ -34,12 +34,9 @@
         in
         {
           default = pkgs.buildGoModule {
-            inherit pname;
-            inherit version;
-
+            inherit pname version;
             src = ./.;
-
-            vendorHash = "sha256-L/D4+cTkofF+RTLRt7KytRm/rC2BxmuUz2hh/IPRvzE=";
+            vendorHash = "sha256-NjpU3luCHoy8kZ1KioFYH4yRvXPl39KtZXvEqj8o2KA=";
           };
         }
       );
@@ -62,9 +59,6 @@
 
       nixosModule = forAllSystems (
         system:
-        let
-          pkgs = nixpkgsFor.${system};
-        in
         {
           config,
           lib,
@@ -74,24 +68,19 @@
         with lib;
         {
           options.programs.beaver-task = {
-            enable = mkEnableOption "beaver-task enable";
+            enable = mkEnableOption "Enable beaver-task";
 
             package = mkOption {
               type = types.package;
               default = self.packages.${system}.default;
               description = "beaver-task package to use";
             };
-
           };
-
         }
       );
 
       homeModule = forAllSystems (
         system:
-        let
-          pkgs = nixpkgsFor.${system};
-        in
         {
           config,
           lib,
@@ -104,7 +93,7 @@
         in
         {
           options.programs.beaver-task = {
-            enable = mkEnableOption "beaver-task enable";
+            enable = mkEnableOption "Enable beaver-task";
 
             package = mkOption {
               type = types.package;
@@ -117,7 +106,7 @@
               default = null;
               description = "JSON configuration settings for beaver-task";
               example = {
-                Test = "whatever string";
+                test = "whatever string";
                 data_dir = "/home/user/.local/share/beaver-task/data.db";
               };
             };
@@ -135,8 +124,11 @@
               };
             }
           );
-
         }
       );
+
+      checks = forAllSystems (system: {
+        beaver-task = self.packages.${system}.default;
+      });
     };
 }
