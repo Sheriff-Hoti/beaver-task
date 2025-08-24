@@ -36,7 +36,7 @@ func (m *Background) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		m.state = msg.State
 
 	case AddItemMsg:
-		m.list.InsertItem(0, &Task{TaskTitle: msg.Value, TaskDescription: "This is a new task"})
+		m.list.InsertItem(0, &Task{TaskTitle: msg.Value, TaskDescription: "This is a new task", TaskCreatedAt: "a few seconds ago"})
 		m.list.NewStatusMessage(statusMessageStyle("Added " + msg.Value))
 
 	case tea.KeyMsg:

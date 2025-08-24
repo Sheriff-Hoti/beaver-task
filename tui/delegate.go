@@ -31,6 +31,11 @@ type CustomItemStyles struct {
 
 	// Characters matching the current filter, if any.
 	FilterMatch lipgloss.Style
+
+	// CreatedAt timestamp styles.
+	NormalCreatedAt   lipgloss.Style
+	SelectedCreatedAt lipgloss.Style
+	DimmedCreatedAt   lipgloss.Style
 }
 
 // NewCustomItemStyles returns style definitions for a default item. See
@@ -61,14 +66,35 @@ func NewCustomItemStyles() (s CustomItemStyles) {
 
 	s.FilterMatch = lipgloss.NewStyle().Underline(true)
 
+	// CreatedAt styles (default to desc-like appearance)
+	s.NormalCreatedAt = lipgloss.NewStyle().
+		Background(lipgloss.Color("#44475a")). // soft dark bg
+		Foreground(lipgloss.Color("#f8f8f2")). // light text
+		Padding(0, 1).                         // some breathing room
+		Bold(true).
+		Align(lipgloss.Right)
+	s.SelectedCreatedAt = lipgloss.NewStyle().
+		Background(lipgloss.Color("#bd93f9")). // purple bg
+		Foreground(lipgloss.Color("#1e1e2e")). // dark text
+		Padding(0, 1).
+		Bold(true).
+		Align(lipgloss.Right)
+	s.DimmedCreatedAt = lipgloss.NewStyle().
+		Background(lipgloss.Color("#282a36")). // very dark gray
+		Foreground(lipgloss.Color("#6272a4")). // muted text
+		Padding(0, 1).
+		Align(lipgloss.Right)
+
 	return s
 }
 
 // CustomItem describes an item designed to work with CustomDelegate.
 type CustomItem interface {
-	list.Item
+	*Task
 	Title() string
 	Description() string
+	FilterValue() string
+	CreatedAt() string
 }
 
 // CustomDelegate is a standard delegate designed to work in lists. It's
@@ -142,14 +168,15 @@ func (d CustomDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 // Render prints an item.
 func (d CustomDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
 	var (
-		title, desc  string
-		matchedRunes []int
-		s            = &d.Styles
+		title, desc, created_at string
+		matchedRunes            []int
+		s                       = &d.Styles
 	)
 
-	if i, ok := item.(CustomItem); ok {
+	if i, ok := item.(*Task); ok {
 		title = i.Title()
 		desc = i.Description()
+		created_at = i.CreatedAt()
 	} else {
 		return
 	}
@@ -162,6 +189,17 @@ func (d CustomDelegate) Render(w io.Writer, m list.Model, index int, item list.I
 	// Prevent text from exceeding list width
 	textwidth := m.Width() - s.NormalTitle.GetPaddingLeft() - s.NormalTitle.GetPaddingRight()
 	title = ansi.Truncate(title, textwidth, ellipsis)
+
+	// cap created_at so it can't overflow the line
+	// maxCreated := 20
+	// if textwidth < 20 {
+	// 	maxCreated = textwidth / 2
+	// 	if maxCreated < 5 {
+	// 		maxCreated = 5
+	// 	}
+	// }
+	// created_at = ansi.Truncate(created_at, maxCreated, ellipsis)
+
 	if d.ShowDescription {
 		var lines []string
 		for i, line := range strings.Split(desc, "\n") {
@@ -188,6 +226,8 @@ func (d CustomDelegate) Render(w io.Writer, m list.Model, index int, item list.I
 	if emptyFilter {
 		title = s.DimmedTitle.Render(title)
 		desc = s.DimmedDesc.Render(desc)
+		created_at = s.DimmedCreatedAt.Render(created_at)
+
 	} else if isSelected && m.FilterState() != list.Filtering {
 		if isFiltered {
 			// Highlight matches
@@ -197,6 +237,7 @@ func (d CustomDelegate) Render(w io.Writer, m list.Model, index int, item list.I
 		}
 		title = s.SelectedTitle.Render(title)
 		desc = s.SelectedDesc.Render(desc)
+		created_at = s.SelectedCreatedAt.Render(created_at)
 	} else {
 		if isFiltered {
 			// Highlight matches
@@ -205,11 +246,20 @@ func (d CustomDelegate) Render(w io.Writer, m list.Model, index int, item list.I
 			title = lipgloss.StyleRunes(title, matchedRunes, matched, unmatched)
 		}
 		title = s.NormalTitle.Render(title)
+		created_at = s.NormalCreatedAt.Render(created_at)
 		desc = s.NormalDesc.Render(desc)
 	}
 
+	gap := max(m.Width()-lipgloss.Width(title)-lipgloss.Width(created_at), 1)
+
 	if d.ShowDescription {
-		fmt.Fprintf(w, "%s\n%s", title, desc) //nolint: errcheck
+		line := lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			title,
+			strings.Repeat(" ", gap),
+			created_at,
+		)
+		fmt.Fprintf(w, "%s\n%s", line, desc) //nolint: errcheck
 		return
 	}
 	fmt.Fprintf(w, "%s", title) //nolint: errcheck
