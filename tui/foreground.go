@@ -56,6 +56,8 @@ func (m *Foreground) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		if m.state == modalView {
 			m.form = NewForm()
 			return m, m.form.Init()
+		} else {
+			m.form = nil
 		}
 		// if m.state == modalView {
 		// 	// focus the form when modal opens

@@ -21,7 +21,6 @@ import (
 var ddl string
 
 func main() {
-	fmt.Println("init")
 	help := flag.Bool("help", false, "show help")
 	configPath := flag.String("config", config.GetDefaultConfigPath(), "path to config file")
 	//read config file
