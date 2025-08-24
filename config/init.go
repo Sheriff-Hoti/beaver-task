@@ -34,6 +34,15 @@ func GetDefaultConfigPath() string {
 	return filepath.Join(xdgConfig, "beaver-task", "config.json")
 }
 
+func (c *Config) ValidateAndFillDefaults() {
+	if c.DataDir == "" {
+		c.DataDir = data.GetDefaultDataPath()
+	}
+	if c.Test == "" {
+		c.Test = "testing"
+	}
+}
+
 func ReadConfigFile(config_path string) (*Config, error) {
 
 	if _, err := os.Stat(config_path); errors.Is(err, os.ErrNotExist) {
@@ -54,6 +63,8 @@ func ReadConfigFile(config_path string) (*Config, error) {
 	if err := json.NewDecoder(file).Decode(&config); err != nil {
 		return nil, err
 	}
+
+	config.ValidateAndFillDefaults()
 
 	return &config, nil
 }

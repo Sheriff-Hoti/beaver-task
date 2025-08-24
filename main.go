@@ -39,6 +39,7 @@ func main() {
 	}
 
 	ctx := context.Background()
+
 	dbPath := cfg.DataDir
 	if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {
 		log.Fatal("error creating database directory:", err)
