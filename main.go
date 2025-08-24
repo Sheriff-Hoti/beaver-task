@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/Sheriff-Hoti/beaver-task/config"
 	"github.com/Sheriff-Hoti/beaver-task/database"
@@ -35,21 +36,22 @@ func main() {
 	cfg, err := config.ReadConfigFile(*configPath)
 	if err != nil {
 		log.Fatal("error reading config file", err)
-		return
 	}
 
 	ctx := context.Background()
+	dbPath := cfg.DataDir
+	if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {
+		log.Fatal("error creating database directory:", err)
+	}
 
-	db, err := sql.Open("sqlite", cfg.DataDir)
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
-		log.Fatal("error opening database", err)
-		return
+		log.Fatal("error opening database:", err)
 	}
 
 	// create tables
 	if _, err := db.ExecContext(ctx, ddl); err != nil {
 		log.Fatal("error creating tables:", err)
-		return
 	}
 
 	defer db.Close()
@@ -59,7 +61,6 @@ func main() {
 	initialTasks, err := queries.ListTasks(ctx, 0)
 	if err != nil {
 		log.Fatal("error listing tasks:", err)
-		return
 	}
 	//initialte the background and foreground here
 	manager := tui.NewManager(initialTasks, queries, ctx)
@@ -72,11 +73,4 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("config path:", *configPath)
-	fmt.Println("help:", *help)
-	fmt.Println("config vals:", cfg)
-	// fmt.Println("res:", res)
-	// fmt.Println("err:", err)
-	//do db operations
-	//initialize bubbletea app
 }
