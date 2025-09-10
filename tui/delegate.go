@@ -206,15 +206,16 @@ func (d CustomDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 // Render prints an item.
 func (d CustomDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
 	var (
-		title, desc, created_at string
-		matchedRunes            []int
-		s                       = &d.Styles
+		title, desc, created_at, status string
+		matchedRunes                    []int
+		s                               = &d.Styles
 	)
 
 	if i, ok := item.(*Task); ok {
 		title = i.Title()
 		desc = i.Description()
 		created_at = i.CreatedAt()
+		status = i.Status()
 	} else {
 		return
 	}
@@ -225,7 +226,7 @@ func (d CustomDelegate) Render(w io.Writer, m list.Model, index int, item list.I
 	}
 
 	// Prevent text from exceeding list width
-	textwidth := m.Width() - s.NormalTitle.GetPaddingLeft() - s.NormalTitle.GetPaddingRight()
+	textwidth := m.Width() - s.NormalTitle.GetPaddingLeft() - s.NormalTitle.GetPaddingRight() - lipgloss.Width(created_at)
 	title = ansi.Truncate(title, textwidth, ellipsis)
 
 	// cap created_at so it can't overflow the line
@@ -297,7 +298,13 @@ func (d CustomDelegate) Render(w io.Writer, m list.Model, index int, item list.I
 			strings.Repeat(" ", gap),
 			created_at,
 		)
-		fmt.Fprintf(w, "%s\n%s", line, desc) //nolint: errcheck
+		description_line := lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			desc,
+			strings.Repeat(" ", max(m.Width()-lipgloss.Width(desc)-lipgloss.Width(status), 1)),
+			status,
+		)
+		fmt.Fprintf(w, "%s\n%s", line, description_line) //nolint: errcheck
 		return
 	}
 	fmt.Fprintf(w, "%s", title) //nolint: errcheck

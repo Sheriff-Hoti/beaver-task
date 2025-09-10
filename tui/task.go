@@ -11,12 +11,14 @@ type Task struct {
 	TaskTitle       string
 	TaskDescription string
 	TaskCreatedAt   string
+	TaskStaus       string
 }
 
 func (t Task) FilterValue() string { return t.TaskTitle }
 func (t Task) Title() string       { return t.TaskTitle }
 func (t Task) Description() string { return t.TaskDescription }
 func (t Task) CreatedAt() string   { return t.TaskCreatedAt }
+func (t Task) Status() string      { return t.TaskStaus }
 
 func fromDatabaseTask(task *database.Task) *Task {
 	return &Task{
@@ -24,6 +26,7 @@ func fromDatabaseTask(task *database.Task) *Task {
 		TaskTitle:       task.Title,
 		TaskDescription: task.Description.String,
 		TaskCreatedAt:   timediff.TimeDiff(task.CreatedAt),
+		TaskStaus:       task.Status,
 	}
 }
 
