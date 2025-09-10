@@ -17,8 +17,13 @@ type ViewState struct {
 	State viewState
 }
 
-type AddItemMsg struct {
-	Value string
+type AddItemResultMsg struct {
+	task *Task
+	err  error
+}
+
+type AddItemRequestMsg struct {
+	title string
 }
 
 func chooseItemCmd(val string) tea.Cmd {
@@ -39,8 +44,14 @@ func changeViewState(state viewState) tea.Cmd {
 	}
 }
 
-func addItemCmd(item string) tea.Cmd {
+func addItemResultCmd(task *Task, err error) tea.Cmd {
 	return func() tea.Msg {
-		return AddItemMsg{Value: item}
+		return AddItemResultMsg{task: task, err: err}
+	}
+}
+
+func addItemRequestCmd(title string) tea.Cmd {
+	return func() tea.Msg {
+		return AddItemRequestMsg{title: title}
 	}
 }

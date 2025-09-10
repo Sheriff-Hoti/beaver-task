@@ -55,10 +55,12 @@ func (m *Manager) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		m.windowWidth = msg.Width
 		m.windowHeight = msg.Height
 
-	case AddItemMsg:
-		m.queries.CreateTask(m.ctx, database.CreateTaskParams{
-			Title: msg.Value,
+	case AddItemRequestMsg:
+		result, err := m.queries.CreateTask(m.ctx, database.CreateTaskParams{
+			Title: msg.title,
 		})
+
+		cmds = append(cmds, addItemResultCmd(fromDatabaseTask(&result), err))
 
 	case ItemChosenMsg:
 		// m.state = modalView

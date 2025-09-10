@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -35,9 +37,15 @@ func (m *Background) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	case ViewState:
 		m.state = msg.State
 
-	case AddItemMsg:
-		m.list.InsertItem(0, &Task{TaskTitle: msg.Value, TaskDescription: "This is a new task", TaskCreatedAt: "a few seconds ago"})
-		m.list.NewStatusMessage(statusMessageStyle("Added " + msg.Value))
+	case AddItemResultMsg:
+		if msg.err != nil {
+			m.list.NewStatusMessage(fmt.Sprintf("Error: %s", msg.err.Error()))
+
+		} else {
+			m.list.InsertItem(0, msg.task)
+			m.list.NewStatusMessage(statusMessageStyle("Added " + msg.task.Title()))
+
+		}
 
 	case tea.KeyMsg:
 

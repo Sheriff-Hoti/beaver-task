@@ -101,7 +101,7 @@ func (m *Foreground) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	if m.form.State == huh.StateCompleted {
 		// Quit when the form is done.
 		title := m.form.GetString("title")
-		cmds = append(cmds, changeViewState(mainView), addItemCmd(title))
+		cmds = append(cmds, changeViewState(mainView), addItemRequestCmd(title))
 		m.form = nil
 	}
 
