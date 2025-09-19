@@ -26,6 +26,15 @@ type AddItemRequestMsg struct {
 	title string
 }
 
+type ChangeItemStatusRequestMsg struct {
+	value string
+}
+
+type ChangeItemStatusResponseMsg struct {
+	task []*Task
+	err  error
+}
+
 func chooseItemCmd(val string) tea.Cmd {
 	return func() tea.Msg {
 		return ItemChosenMsg{Value: val}

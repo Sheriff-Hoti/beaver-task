@@ -71,8 +71,12 @@ func modalKeyMaps() *modalKeyMap {
 }
 
 type delegateKeyMap struct {
-	choose key.Binding
-	delete key.Binding
+	choose     key.Binding
+	delete     key.Binding
+	done       key.Binding
+	inProgress key.Binding
+	review     key.Binding
+	notStarted key.Binding
 }
 
 func newDelegateKeyMap() *delegateKeyMap {
@@ -84,6 +88,22 @@ func newDelegateKeyMap() *delegateKeyMap {
 		delete: key.NewBinding(
 			key.WithKeys("ctrl+x", "backspace"),
 			key.WithHelp("ctrl+x/backspace", "delete"),
+		),
+		done: key.NewBinding(
+			key.WithKeys("d"),
+			key.WithHelp("d", "mark as done"),
+		),
+		inProgress: key.NewBinding(
+			key.WithKeys("p"),
+			key.WithHelp("p", "mark in progress"),
+		),
+		review: key.NewBinding(
+			key.WithKeys("r"),
+			key.WithHelp("r", "mark as review"),
+		),
+		notStarted: key.NewBinding(
+			key.WithKeys("n"),
+			key.WithHelp("n", "mark not started"),
 		),
 	}
 }

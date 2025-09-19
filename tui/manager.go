@@ -2,6 +2,7 @@ package tui
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/Sheriff-Hoti/beaver-task/database"
 	"github.com/Sheriff-Hoti/beaver-task/overlay"
@@ -57,7 +58,8 @@ func (m *Manager) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 	case AddItemRequestMsg:
 		result, err := m.queries.CreateTask(m.ctx, database.CreateTaskParams{
-			Title: msg.title,
+			Title:       msg.title,
+			Description: sql.NullString{Valid: true, String: "The forest lay quiet in the early dawn, with only the faint rustle of leaves betraying the breeze that crept between the trees. A thin fog hugged the undergrowth, softening the outlines of moss-covered rocks and the twisted roots that clawed at the forest floor."},
 		})
 
 		cmds = append(cmds, addItemResultCmd(fromDatabaseTask(&result), err))

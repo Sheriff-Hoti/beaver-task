@@ -14,6 +14,40 @@ import (
 	"github.com/charmbracelet/x/ansi"
 )
 
+var statusStyles = map[string]lipgloss.Style{
+	"DONE": lipgloss.NewStyle().
+		Background(lipgloss.Color("#22c55e")). // green
+		Foreground(lipgloss.Color("#000000")).
+		Padding(0, 1).
+		Bold(true),
+
+	"IN PROGRESS": lipgloss.NewStyle().
+		Background(lipgloss.Color("#eab308")). // yellow
+		Foreground(lipgloss.Color("#000000")).
+		Padding(0, 1).
+		Bold(true),
+
+	"REVIEW": lipgloss.NewStyle().
+		Background(lipgloss.Color("#3b82f6")). // blue
+		Foreground(lipgloss.Color("#ffffff")).
+		Padding(0, 1).
+		Bold(true),
+
+	"NOT STARTED": lipgloss.NewStyle().
+		Background(lipgloss.Color("#ef4444")). // red
+		Foreground(lipgloss.Color("#ffffff")).
+		Padding(0, 1).
+		Bold(true),
+}
+
+func renderStatus(status string) string {
+	style, ok := statusStyles[status]
+	if !ok {
+		return status // fallback if not styled
+	}
+	return style.Render(status)
+}
+
 // CustomItemStyles defines styling for a default list item.
 // See CustomItemView for when these come into play.
 type CustomItemStyles struct {
@@ -74,8 +108,8 @@ func NewCustomItemStyles() (s CustomItemStyles) {
 		Bold(true).
 		Align(lipgloss.Right)
 	s.SelectedCreatedAt = lipgloss.NewStyle().
-		Background(lipgloss.Color("#bd93f9")). // purple bg
-		Foreground(lipgloss.Color("#1e1e2e")). // dark text
+		Background(lipgloss.Color("#8A59E0")). // purple bg
+		// Foreground(lipgloss.Color("#1e1e2e")). // dark text
 		Padding(0, 1).
 		Bold(true).
 		Align(lipgloss.Right)
@@ -215,7 +249,7 @@ func (d CustomDelegate) Render(w io.Writer, m list.Model, index int, item list.I
 		title = i.Title()
 		desc = i.Description()
 		created_at = i.CreatedAt()
-		status = i.Status()
+		status = renderStatus(i.Status())
 	} else {
 		return
 	}
@@ -226,7 +260,7 @@ func (d CustomDelegate) Render(w io.Writer, m list.Model, index int, item list.I
 	}
 
 	// Prevent text from exceeding list width
-	textwidth := m.Width() - s.NormalTitle.GetPaddingLeft() - s.NormalTitle.GetPaddingRight() - lipgloss.Width(created_at)
+	textwidth := m.Width() - s.NormalTitle.GetPaddingLeft() - s.NormalTitle.GetPaddingRight() - lipgloss.Width(created_at) - lipgloss.Width(status) - s.NormalCreatedAt.GetPaddingLeft() - s.NormalCreatedAt.GetHorizontalPadding()
 	title = ansi.Truncate(title, textwidth, ellipsis)
 
 	// cap created_at so it can't overflow the line
@@ -289,22 +323,22 @@ func (d CustomDelegate) Render(w io.Writer, m list.Model, index int, item list.I
 		desc = s.NormalDesc.Render(desc)
 	}
 
-	gap := max(m.Width()-lipgloss.Width(title)-lipgloss.Width(created_at), 1)
+	gap := max(m.Width()-lipgloss.Width(title)-lipgloss.Width(created_at)-lipgloss.Width(status), 1)
+	// descGap := max(m.Width()-lipgloss.Width(desc)-lipgloss.Width(status), 1)
 
 	if d.ShowDescription {
 		line := lipgloss.JoinHorizontal(
-			lipgloss.Top,
+			lipgloss.Center,
 			title,
 			strings.Repeat(" ", gap),
+			" ",
+			status,
+			" ",
+			// strings.Repeat(" ", gap),
 			created_at,
 		)
-		description_line := lipgloss.JoinHorizontal(
-			lipgloss.Top,
-			desc,
-			strings.Repeat(" ", max(m.Width()-lipgloss.Width(desc)-lipgloss.Width(status), 1)),
-			status,
-		)
-		fmt.Fprintf(w, "%s\n%s", line, description_line) //nolint: errcheck
+		final := lipgloss.JoinVertical(lipgloss.Top, line, desc)
+		fmt.Fprintf(w, "%s", final) //nolint: errcheck
 		return
 	}
 	fmt.Fprintf(w, "%s", title) //nolint: errcheck
